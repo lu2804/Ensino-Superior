@@ -49,9 +49,9 @@ def carregar_dados():
             'NO_IES', 'SG_IES', 'QT_DOC_TOTAL', 'QT_TEC_TOTAL', 'NO_MANTENEDORA',
             'QT_DOC_EX_SEM_GRAD', 'QT_DOC_EX_GRAD', 'QT_DOC_EX_ESP',
             'QT_DOC_EX_MEST', 'QT_DOC_EX_DOUT',
-            'QT_LIVRO_ELETRONICO', # Nova coluna adicionada
-            'QT_DOC_EX_FEMI', # Nova coluna adicionada
-            'QT_DOC_EX_MASC' # Nova coluna adicionada
+            'QT_LIVRO_ELETRONICO', 
+            'QT_DOC_EX_FEMI', 
+            'QT_DOC_EX_MASC' 
         ]
         
         missing_cols = [col for col in required_original_cols if col not in df.columns]
@@ -60,7 +60,7 @@ def carregar_dados():
                      f" Verifique se o arquivo está correto e se os nomes das colunas correspondem (sensível a maiúsculas/minúsculas).")
             return pd.DataFrame()
 
-        # Renomeia colunas para nomes mais amigáveis e consistentes para uso no aplicativo
+        # Renomeia colunas para nomes mais amigáveis
         df.rename(columns={
             'NU_ANO_CENSO': 'Ano do Censo',
             'nome_municipio': 'Município',
@@ -73,15 +73,15 @@ def carregar_dados():
             'SG_IES': 'Sigla da IES',
             'QT_DOC_TOTAL': 'Total de Docentes',
             'QT_TEC_TOTAL': 'Total de Técnicos',
-            # Renomear colunas de docentes por nível de formação para maior clareza
+            # Renomear colunas de docentes por nível de formação
             'QT_DOC_EX_SEM_GRAD': 'Docentes Sem Graduação',
             'QT_DOC_EX_GRAD': 'Docentes com Graduação',
             'QT_DOC_EX_ESP': 'Docentes com Especialização',
             'QT_DOC_EX_MEST': 'Docentes com Mestrado',
             'QT_DOC_EX_DOUT': 'Docentes com Doutorado',
-            'QT_LIVRO_ELETRONICO': 'Total de Livros Eletrônicos', # Renomeado
-            'QT_DOC_EX_FEMI': 'Docentes Feminino', # Renomeado
-            'QT_DOC_EX_MASC': 'Docentes Masculino' # Renomeado
+            'QT_LIVRO_ELETRONICO': 'Total de Livros Eletrônicos', 
+            'QT_DOC_EX_FEMI': 'Docentes Feminino', 
+            'QT_DOC_EX_MASC': 'Docentes Masculino' 
         }, inplace=True)
 
         # Preencher valores NaN (Not a Number) em colunas numéricas de contagem com 0.
@@ -187,7 +187,7 @@ if not df.empty:
         total_municipios_c_ies = df_filtrado['Município'].nunique() if 'Município' in df_filtrado.columns else 0
         total_livros_eletronicos = df_filtrado['Total de Livros Eletrônicos'].sum() if 'Total de Livros Eletrônicos' in df_filtrado.columns else 0
         
-        col1, col2, col3, col4 = st.columns(4) # Aumenta para 4 colunas
+        col1, col2, col3, col4 = st.columns(4) 
         with col1:
             st.metric(label="Total de IES", value=total_ies)
         with col2:
@@ -227,7 +227,7 @@ if not df.empty:
         else:
             st.warning("Não foi possível gerar 'Total de IES por Município': Colunas necessárias ausentes ou dados filtrados vazios.")
 
-        # 2. Novo Gráfico de Barras: Quantidade total de técnicos por Mantenedora (Baseado em image_8ed435.png)
+        # 2. Novo Gráfico de Barras: Quantidade total de técnicos por Mantenedora
         if "Mantenedora" in df_filtrado.columns and "Total de Técnicos" in df_filtrado.columns and not df_filtrado.empty:
             st.markdown("##### Quantidade Total de Técnicos por Mantenedora")
             tec_por_mantenedora = df_filtrado.groupby("Mantenedora")["Total de Técnicos"].sum().reset_index()
@@ -252,7 +252,7 @@ if not df.empty:
             st.warning("Não foi possível gerar 'Quantidade Total de Técnicos por Mantenedora': Colunas necessárias ausentes ou dados filtrados vazios.")
 
 
-        # 3. NOVO GRÁFICO: Quantidade de Docentes por Sexo em Organização Acadêmica (Baseado em image_c4e4f9.png)
+        # 3. NOVO GRÁFICO: Quantidade de Docentes por Sexo em Organização Acadêmica 
         if all(col in df_filtrado.columns for col in ["Organização Acadêmica", "Docentes Feminino", "Docentes Masculino"]) and not df_filtrado.empty:
             
             # Agrupa os dados por Organização Acadêmica e soma os docentes femininos e masculinos
@@ -272,7 +272,7 @@ if not df.empty:
             # Calcular o total de docentes para esta visualização
             total_docentes_para_grafico = docentes_long['Quantidade de Docentes'].sum()
             
-            # --- Layout para Título e Métrica (Replicando o visual da imagem) ---
+            # --- Layout para Título e Métrica ---
             st.markdown("#### Quantidade de Docentes do sexo feminino, Quantidade de docentes do sexo masculino por Organização Acadêmica")
             
             # Usando colunas para a métrica total e o título da sub-seção do gráfico
@@ -324,7 +324,7 @@ if not df.empty:
                 y='Quantidade de Docentes',
                 color='Sexo', # Cria as barras agrupadas por sexo
                 barmode='group', # Garante que as barras sejam agrupadas
-                # O título principal do gráfico já está acima, este é mais um subtítulo visual
+                # O título principal acima, este é um subtítulo visual
                 labels={
                     "Organização Acadêmica": "Organização Acadêmica", 
                     "Quantidade de Docentes": "Quantidade de Docentes",
@@ -358,9 +358,7 @@ if not df.empty:
             st.warning("Não foi possível gerar 'Quantidade de Docentes por Sexo e Organização Acadêmica': Colunas necessárias ausentes ou dados filtrados vazios.")
 
 
-        # 4. Modelo de Gráfico de Pizza: Distribuição de Instituições por Categoria Administrativa (AJUSTADO)
-        # O gráfico de pizza agora usará a coluna 'Categoria Administrativa' já mapeada na função carregar_dados()
-        # Esta coluna agrupa os dados para corresponder à visualização desejada na imagem.
+        # 4. Modelo de Gráfico de Pizza: Distribuição de Instituições por Categoria Administrativa 
         if "Categoria Administrativa" in df_filtrado.columns and not df_filtrado.empty:
             st.markdown("##### Distribuição de Instituições por Categoria Administrativa")
             cat_admin_counts = df_filtrado['Categoria Administrativa'].value_counts().reset_index()
@@ -379,13 +377,12 @@ if not df.empty:
                 # Cores em tons de azul conforme solicitado (e uma cor extra para 'Outras Categorias')
                 color_discrete_sequence=['#2470AD', '#33A3FF', '#7DC3FC', '#C7E3F9', '#1A4B7D'] 
             )
-            fig_cat_admin.update_traces(textposition='inside', textinfo='percent+label') # Mostra percentual e label dentro das fatias
+            fig_cat_admin.update_traces(textposition='inside', textinfo='percent') # Mostra percentual e label dentro das fatias
             st.plotly_chart(fig_cat_admin, use_container_width=True)
         else:
             st.warning("Não foi possível gerar 'Distribuição de Instituições por Categoria Administrativa': Coluna 'Categoria Administrativa' ausente ou dados filtrados vazios.")
 
          # 5. Gráfico de Árvore (Treemap): Estrutura das IES por Organização Acadêmica (Tamanho e Cor: Livros Eletrônicos)
-        # Agora exibido sem a coluna lateral para pizza e treemap
         if all(col in df_filtrado.columns for col in ["Organização Acadêmica", "Total de Livros Eletrônicos"]) and not df_filtrado.empty:
             st.markdown("##### Estrutura das IES por Organização Acadêmica (Tamanho e Cor: Livros Eletrônicos)")
             
@@ -471,9 +468,6 @@ if not df.empty:
             """)
         else:
             st.info("Nenhum dado filtrado para exibir na tabela detalhada das IES.")
-
-
-        # --- INTERATIVIDADE BIDIRECIONAL NO STREAMLIT ---
        
 
 else:
