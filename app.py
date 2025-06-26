@@ -1,14 +1,46 @@
-# Ensino-Superior
-import streamlit as st
+# pip install streamlit plotly pandas
 import pandas as pd
 import plotly.express as px
+import streamlit as st
 import os # Módulo para operações de sistema, útil para verificar arquivos
 
 # --- Configurações Iniciais do Streamlit ---
 # Define o layout da página para ser amplo e o título que aparece na aba do navegador.
+# Para ativar o modo escuro no Streamlit, você precisa criar um arquivo `config.toml`.
+# 1. Crie uma pasta chamada `.streamlit` (com o ponto na frente) no mesmo diretório do seu `app.py`.
+# 2. Dentro da pasta `.streamlit`, crie um arquivo chamado `config.toml`.
+# 3. Cole o seguinte conteúdo no `config.toml`:
+#    [theme]
+#    base="dark"
+#    primaryColor="#2470AD" # Um tom de azul que se alinha com sua paleta
+#    backgroundColor="#0E1117"
+#    secondaryBackgroundColor="#262730"
+#    textColor="#FAFAFA"
+#    font="sans serif"
+# 4. Salve o arquivo `config.toml` e reinicie seu aplicativo Streamlit.
 st.set_page_config(layout="wide", page_title="Educação Superior RIDE/DF")
 
-# Título principal do aplicativo
+# --- Estilo CSS para a Faixa Azul (Do modelo Nascidos Vivos) ---
+st.markdown(
+    """
+    <style>
+        .faixa-azul {
+            background-color: #022857;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            border-radius: 15px 15px 0 0;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown('<div class="faixa-azul">Educação Superior - RIDE/DF</div>', unsafe_allow_html=True) # Título da faixa azul
+
+# Título principal do aplicativo (já existia, mas o da faixa azul é o principal agora)
 st.title("🎓 Análise da Educação Superior na RIDE/DF")
 # Descrição introdutória
 st.markdown("Este painel interativo permite explorar dados sobre instituições e docentes de ensino superior na Região Integrada de Desenvolvimento do Distrito Federal e Entorno (RIDE/DF).")
@@ -54,9 +86,9 @@ def carregar_dados():
             'NO_IES', 'SG_IES', 'QT_DOC_TOTAL', 'QT_TEC_TOTAL', 'NO_MANTENEDORA',
             'QT_DOC_EX_SEM_GRAD', 'QT_DOC_EX_GRAD', 'QT_DOC_EX_ESP',
             'QT_DOC_EX_MEST', 'QT_DOC_EX_DOUT',
-            'QT_LIVRO_ELETRONICO', # Nova coluna adicionada
-            'QT_DOC_EX_FEMI', # Nova coluna adicionada
-            'QT_DOC_EX_MASC' # Nova coluna adicionada
+            'QT_LIVRO_ELETRONICO', 
+            'QT_DOC_EX_FEMI', 
+            'QT_DOC_EX_MASC' 
         ]
         
         missing_cols = [col for col in required_original_cols if col not in df.columns]
@@ -78,15 +110,14 @@ def carregar_dados():
             'SG_IES': 'Sigla da IES',
             'QT_DOC_TOTAL': 'Total de Docentes',
             'QT_TEC_TOTAL': 'Total de Técnicos',
-            # Renomear colunas de docentes por nível de formação para maior clareza
             'QT_DOC_EX_SEM_GRAD': 'Docentes Sem Graduação',
             'QT_DOC_EX_GRAD': 'Docentes com Graduação',
             'QT_DOC_EX_ESP': 'Docentes com Especialização',
             'QT_DOC_EX_MEST': 'Docentes com Mestrado',
             'QT_DOC_EX_DOUT': 'Docentes com Doutorado',
-            'QT_LIVRO_ELETRONICO': 'Total de Livros Eletrônicos', # Renomeado
-            'QT_DOC_EX_FEMI': 'Docentes Feminino', # Renomeado
-            'QT_DOC_EX_MASC': 'Docentes Masculino' # Renomeado
+            'QT_LIVRO_ELETRONICO': 'Total de Livros Eletrônicos', 
+            'QT_DOC_EX_FEMI': 'Docentes Feminino', 
+            'QT_DOC_EX_MASC': 'Docentes Masculino' 
         }, inplace=True)
 
         # Preencher valores NaN (Not a Number) em colunas numéricas de contagem com 0.
@@ -94,7 +125,7 @@ def carregar_dados():
             'Total de Docentes', 'Total de Técnicos',
             'Docentes Sem Graduação', 'Docentes com Graduação', 'Docentes com Especialização',
             'Docentes com Mestrado', 'Docentes com Doutorado',
-            'Total de Livros Eletrônicos', 'Docentes Feminino', 'Docentes Masculino' # Novas colunas
+            'Total de Livros Eletrônicos', 'Docentes Feminino', 'Docentes Masculino' 
         ]
         for col in numeric_cols_to_fill:
             if col in df.columns: 
@@ -118,12 +149,13 @@ def carregar_dados():
             df['Tipo de Rede'] = df['Tipo de Rede'].map(rede_map).fillna('Não Definido')
 
         if 'Categoria Administrativa' in df.columns:
-            categoria_map = {
-                1: 'Pública Federal', 2: 'Pública Estadual', 3: 'Pública Municipal',
-                4: 'Privada Comunitária', 5: 'Privada Confessional', 6: 'Privada Filantrópica',
-                7: 'Privada Sem Fins Lucrativos', 8: 'Privada Com Fins Lucrativos'
+            categoria_map_personalizado = {
+                1: 'Pública Federal',
+                2: 'Pública Estadual',
+                7: 'Privada sem fins lucrativos', 
+                8: 'Privada com fins lucrativos' 
             }
-            df['Categoria Administrativa'] = df['Categoria Administrativa'].map(categoria_map).fillna('Não Definido')
+            df['Categoria Administrativa'] = df['TP_CATEGORIA_ADMINISTRATIVA'].map(categoria_map_personalizado).fillna('Outras Categorias')
 
         return df
     
@@ -135,47 +167,61 @@ def carregar_dados():
 # Carrega os dados uma vez (ou do cache)
 df = carregar_dados()
 
-# --- Bloco Principal da Aplicação Streamlit ---
-if not df.empty:
-    # --- Sidebar com Filtros ---
-    st.sidebar.header("🔎 Filtros Interativos")
-    st.sidebar.markdown("Selecione as opções abaixo para filtrar os dados em todo o painel.")
+# --- Layout Principal em Colunas (Adaptado do modelo Nascidos Vivos) ---
+col1_main, col2_main = st.columns([0.25, 0.75]) # Proporção para filtros na esquerda, gráficos na direita
 
-    if "Ano do Censo" in df.columns:
-        anos = sorted(df["Ano do Censo"].unique())
-        ano_sel = st.sidebar.selectbox("Ano do Censo", anos)
-    else:
-        st.sidebar.warning("Coluna 'Ano do Censo' não disponível para filtragem.")
-        ano_sel = None 
+with col1_main: # Coluna da esquerda para filtros
+    st.subheader("🔎 Filtros Interativos")
+    st.markdown("Selecione as opções abaixo para filtrar os dados em todo o painel.")
 
-    if "Organização Acadêmica" in df.columns:
-        organizacoes = sorted(df["Organização Acadêmica"].unique())
-        organizacao_sel = st.sidebar.selectbox("Organização Acadêmica", ['Todas'] + list(organizacoes))
-    else:
-        st.sidebar.warning("Coluna 'Organização Acadêmica' não disponível para filtragem.")
-        organizacao_sel = 'Todas' 
+    # Sub-colunas para organizar os filtros (Adaptado do modelo Nascidos Vivos)
+    col1_filtro, col2_filtro, col3_filtro = st.columns(3)
 
-    if "Tipo de Rede" in df.columns:
-        tipos_rede = sorted(df["Tipo de Rede"].unique())
-        tipo_rede_sel = st.sidebar.selectbox("Tipo de Rede", ['Todas'] + list(tipos_rede))
-    else:
-        st.sidebar.warning("Coluna 'Tipo de Rede' não disponível para filtragem.")
-        tipo_rede_sel = 'Todas' 
+    with col1_filtro:
+        if "Ano do Censo" in df.columns:
+            anos = sorted(df["Ano do Censo"].unique())
+            ano_sel = st.selectbox("Ano do Censo", anos)
+        else:
+            st.warning("Coluna 'Ano do Censo' não disponível para filtragem.")
+            ano_sel = None 
 
-    if "Município" in df.columns:
-        municipios = sorted(df["Município"].unique())
-        municipio_sel = st.sidebar.selectbox("Município", ['Todos'] + list(municipios))
-    else:
-        st.sidebar.warning("Coluna 'Município' não disponível para filtragem.")
-        municipio_sel = 'Todos' 
+    with col2_filtro:
+        if "Organização Acadêmica" in df.columns:
+            organizacoes = sorted(df["Organização Acadêmica"].unique())
+            organizacao_sel = st.selectbox("Organização Acadêmica", ['Todas'] + list(organizacoes))
+        else:
+            st.warning("Coluna 'Organização Acadêmica' não disponível para filtragem.")
+            organizacao_sel = 'Todas' 
 
-    if "Nome da IES" in df.columns:
-        instituicoes = sorted(df["Nome da IES"].unique())
-        instituicao_sel = st.sidebar.selectbox("Instituição de Ensino", ['Todas'] + list(instituicoes))
-    else:
-        st.sidebar.warning("Coluna 'Nome da IES' não disponível para filtragem.")
-        instituicao_sel = 'Todas' 
+    with col3_filtro:
+        if "Tipo de Rede" in df.columns:
+            tipos_rede = sorted(df["Tipo de Rede"].unique())
+            tipo_rede_sel = st.selectbox("Tipo de Rede", ['Todas'] + list(tipos_rede))
+        else:
+            st.warning("Coluna 'Tipo de Rede' não disponível para filtragem.")
+            tipo_rede_sel = 'Todas' 
+    
+    # Novos filtros que podem ser adicionados abaixo ou em novas colunas
+    col4_filtro, col5_filtro = st.columns(2)
+    with col4_filtro:
+        if "Município" in df.columns:
+            municipios = sorted(df["Município"].unique())
+            municipio_sel = st.selectbox("Município", ['Todos'] + list(municipios))
+        else:
+            st.warning("Coluna 'Município' não disponível para filtragem.")
+            municipio_sel = 'Todos' 
+    
+    with col5_filtro:
+        if "Nome da IES" in df.columns:
+            instituicoes = sorted(df["Nome da IES"].unique())
+            instituicao_sel = st.selectbox("Instituição de Ensino", ['Todas'] + list(instituicoes))
+        else:
+            st.warning("Coluna 'Nome da IES' não disponível para filtragem.")
+            instituicao_sel = 'Todas' 
 
+    st.markdown("---") # Divisor visual
+
+with col2_main: # Coluna da direita para métricas e gráficos
     # --- Aplicação dos Filtros ao DataFrame ---
     df_filtrado = df.copy() 
 
@@ -196,7 +242,7 @@ if not df.empty:
 
     # --- Verificação de DataFrame Filtrado Vazio ---
     if df_filtrado.empty:
-        st.info("Nenhum registro encontrado para os filtros selecionados. Por favor, ajuste os filtros na barra lateral.")
+        st.info("Nenhum registro encontrado para os filtros selecionados. Por favor, ajuste os filtros.")
     else:
         # --- VALORES CHAVE (Key Metrics) ---
         st.subheader("💡 Métricas Chave")
@@ -206,14 +252,14 @@ if not df.empty:
         total_municipios_c_ies = df_filtrado['Município'].nunique() if 'Município' in df_filtrado.columns else 0
         total_livros_eletronicos = df_filtrado['Total de Livros Eletrônicos'].sum() if 'Total de Livros Eletrônicos' in df_filtrado.columns else 0
         
-        col1, col2, col3, col4 = st.columns(4) # Aumenta para 4 colunas
-        with col1:
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4) # Aumenta para 4 colunas
+        with col_m1:
             st.metric(label="Total de IES", value=total_ies)
-        with col2:
+        with col_m2:
             st.metric(label="Total de Docentes", value=f"{total_docentes_ex:,.0f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        with col3:
+        with col_m3:
             st.metric(label="Municípios c/ IES", value=total_municipios_c_ies)
-        with col4: # Nova métrica
+        with col_m4: # Nova métrica
             st.metric(label="Total de Livros Eletrônicos", value=f"{total_livros_eletronicos:,.0f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
 
@@ -225,10 +271,13 @@ if not df.empty:
         # --- GRÁFICOS E VISUALIZAÇÕES ---
         st.subheader("📊 Visualizações e Gráficos")
 
-        # 1. Modelo de Gráfico de Barras: Total de IES por Município (Mantido)
+        # 1. Modelo de Gráfico de Barras: Total de IES por Município
         if "Município" in df_filtrado.columns and "Nome da IES" in df_filtrado.columns and not df_filtrado.empty:
             st.markdown("##### Total de IES por Município")
             ies_por_municipio = df_filtrado.groupby("Município")['Nome da IES'].nunique().reset_index(name="Total de IES")
+            # Ordena os dados em ordem decrescente
+            ies_por_municipio = ies_por_municipio.sort_values("Total de IES", ascending=False)
+            
             fig_ies_municipio = px.bar(
                 ies_por_municipio, 
                 x="Município", 
@@ -236,10 +285,7 @@ if not df.empty:
                 text="Total de IES", 
                 title="Número Total de Instituições de Ensino Superior por Município",
                 labels={"Total de IES": "Número de Instituições", "Município": "Município"},
-                  color_discrete_map={
-                    'Docentes Feminino': '#2C5E8A', # Tom de azul mais escuro
-                    'Docentes Masculino': '#5FAEEB'  # Tom de azul mais claro
-                },
+                color_discrete_sequence=px.colors.qualitative.Pastel # Usando paleta pastel
             )
             fig_ies_municipio.update_traces(textposition='outside') 
             fig_ies_municipio.update_layout(xaxis_title="Município", yaxis_title="Total de IES", hovermode="x unified")
@@ -247,7 +293,7 @@ if not df.empty:
         else:
             st.warning("Não foi possível gerar 'Total de IES por Município': Colunas necessárias ausentes ou dados filtrados vazios.")
 
-        # 2. Novo Gráfico de Barras: Quantidade total de técnicos por Mantenedora (Baseado em image_8ed435.png)
+        # 2. Novo Gráfico de Barras: Quantidade total de técnicos por Mantenedora
         if "Mantenedora" in df_filtrado.columns and "Total de Técnicos" in df_filtrado.columns and not df_filtrado.empty:
             st.markdown("##### Quantidade Total de Técnicos por Mantenedora")
             tec_por_mantenedora = df_filtrado.groupby("Mantenedora")["Total de Técnicos"].sum().reset_index()
@@ -261,9 +307,7 @@ if not df.empty:
                 text="Total de Técnicos", 
                 title="Quantidade Total de Técnicos por Mantenedora",
                 labels={"Total de Técnicos": "Quantidade Total de Técnicos", "Mantenedora": "Nome da Mantenedora"},
-                  color_discrete_map={
-                    'Total de Técnicos': '#2C5E8A', # Tom de azul mais escuro
-                                },
+                color_discrete_sequence=px.colors.qualitative.Plotly 
             )
             fig_tec_mantenedora.update_traces(textposition='outside')
             fig_tec_mantenedora.update_layout(xaxis_title="Quantidade Total de Técnicos", yaxis_title="Mantenedora", hovermode="y unified")
@@ -272,9 +316,8 @@ if not df.empty:
             st.warning("Não foi possível gerar 'Quantidade Total de Técnicos por Mantenedora': Colunas necessárias ausentes ou dados filtrados vazios.")
 
 
-       # 3. NOVO GRÁFICO: Quantidade de Docentes por Sexo em Organização Acadêmica (Baseado em image_993257.png)
+        # 3. Gráfico: Quantidade de Docentes por Sexo em Organização Acadêmica
         if all(col in df_filtrado.columns for col in ["Organização Acadêmica", "Docentes Feminino", "Docentes Masculino"]) and not df_filtrado.empty:
-            st.markdown("##### Quantidade de Docentes por Sexo e Organização Acadêmica")
             
             # Agrupa os dados por Organização Acadêmica e soma os docentes femininos e masculinos
             docentes_por_org_e_sexo = df_filtrado.groupby('Organização Acadêmica')[[
@@ -289,6 +332,41 @@ if not df.empty:
                 var_name='Sexo', 
                 value_name='Quantidade de Docentes'
             )
+
+            # Calcular o total de docentes para esta visualização
+            total_docentes_para_grafico = docentes_long['Quantidade de Docentes'].sum()
+            
+            # --- Layout para Título e Métrica (Replicando o visual da imagem) ---
+            st.markdown("#### Quantidade de Docentes do sexo feminino, Quantidade de docentes do sexo masculino por Organização Acadêmica")
+            
+            # Usando colunas para a métrica total e o título da sub-seção do gráfico
+            col_total_docentes, col_sub_titulo_grafico = st.columns([0.25, 0.75])
+
+            with col_total_docentes:
+                # Tentativa de replicar o círculo com a métrica
+                st.markdown(f"""
+                <div style="
+                    border: 4px solid #3366CC; 
+                    border-radius: 50%; 
+                    width: 150px; 
+                    height: 150px; 
+                    display: flex; 
+                    flex-direction: column; 
+                    justify-content: center; 
+                    align-items: center; 
+                    margin: 20px auto;
+                    color: {'white' if st.config.get_option('theme.base') == 'dark' else 'black'};
+                    background-color: {'#0E1117' if st.config.get_option('theme.base') == 'dark' else 'white'};
+                    text-align: center;
+                ">
+                    <span style="font-size: 14px;">Quantidade total de docentes</span>
+                    <span style="font-size: 24px; font-weight: bold;">{f'{total_docentes_para_grafico / 1000:,.1f}'.replace(",", "X").replace(".", ",").replace("X", ".")} mil</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with col_sub_titulo_grafico:
+                st.markdown("##### Quantidade de docentes do sexo feminino / Quantidade de docentes do sexo masculino")
+
 
             # Ordena a coluna 'Organização Acadêmica' para uma apresentação consistente no eixo X
             docentes_long['Organização Acadêmica'] = pd.Categorical(
@@ -309,47 +387,55 @@ if not df.empty:
                 y='Quantidade de Docentes',
                 color='Sexo', # Cria as barras agrupadas por sexo
                 barmode='group', # Garante que as barras sejam agrupadas
-                title='Quantidade de Docentes por Sexo e Organização Acadêmica',
                 labels={
                     "Organização Acadêmica": "Organização Acadêmica", 
                     "Quantidade de Docentes": "Quantidade de Docentes",
                     "Sexo": "Sexo do Docente"
                 },
-                # Removido text_auto=True e adicionado update_traces para controle explícito
-                # Ajusta as cores para serem próximas às da imagem
                 color_discrete_map={
                     'Docentes Feminino': '#2C5E8A', # Tom de azul mais escuro
                     'Docentes Masculino': '#5FAEEB'  # Tom de azul mais claro
                 },
-                category_orders=category_orders # Aplica a ordem das categorias para garantir a visualização
+                category_orders=category_orders 
             )
-            # Adicionado para exibir os valores acima das barras
-            fig_docentes_org_sexo.update_traces(texttemplate='%{y}', textposition='outside')
+            # Formatação dos números nas barras para "mil" e posicionamento externo
+            fig_docentes_org_sexo.update_traces(texttemplate='%{y:,.1s}', textposition='outside')
             
             fig_docentes_org_sexo.update_layout(
                 xaxis_title="Organização Acadêmica", 
-                yaxis_title="Quantidade de Docentes", 
-                hovermode="x unified"
+                yaxis_title="", # Eixo Y sem título para replicar a imagem
+                hovermode="x unified",
+                # Posicionamento da legenda abaixo do gráfico
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=-0.2, # Ajusta para ficar abaixo do gráfico
+                    xanchor="center",
+                    x=0.7, # Centraliza horizontalmente
+                    title_text="" # Remove o título da legenda
+                )
             )
             st.plotly_chart(fig_docentes_org_sexo, use_container_width=True)
         else:
             st.warning("Não foi possível gerar 'Quantidade de Docentes por Sexo e Organização Acadêmica': Colunas necessárias ausentes ou dados filtrados vazios.")
 
 
-        # 4. Modelo de # 4. Modelo de Gráfico de Pizza: Distribuição de Instituições por Categoria Administrativa (AJUSTADO)
-        # O gráfico de pizza agora usará a coluna 'Categoria Administrativa' já mapeada na função carregar_dados()
-        # Esta coluna agrupa os dados para corresponder à visualização desejada na imagem.
+        # 4. Modelo de Gráfico de Pizza: Distribuição de Instituições por Categoria Administrativa
         if "Categoria Administrativa" in df_filtrado.columns and not df_filtrado.empty:
             st.markdown("##### Distribuição de Instituições por Categoria Administrativa")
             cat_admin_counts = df_filtrado['Categoria Administrativa'].value_counts().reset_index()
             cat_admin_counts.columns = ['Categoria Administrativa', 'Número de IES']
             
+            # Ordenar os dados em ordem decrescente pelo 'Número de IES'
+            cat_admin_counts = cat_admin_counts.sort_values(by='Número de IES', ascending=False)
+
             fig_cat_admin = px.pie(
                 cat_admin_counts, 
                 values='Número de IES', 
                 names='Categoria Administrativa', 
                 title='Distribuição de Instituições de Ensino Superior por Categoria Administrativa',
                 hole=0, 
+                height=600, # Aumenta a altura do gráfico
                 # Cores em tons de azul conforme solicitado (e uma cor extra para 'Outras Categorias')
                 color_discrete_sequence=['#2470AD', '#33A3FF', '#7DC3FC', '#C7E3F9', '#1A4B7D'] 
             )
@@ -357,26 +443,41 @@ if not df.empty:
             st.plotly_chart(fig_cat_admin, use_container_width=True)
         else:
             st.warning("Não foi possível gerar 'Distribuição de Instituições por Categoria Administrativa': Coluna 'Categoria Administrativa' ausente ou dados filtrados vazios.")
-        # 5. Modelo de Gráfico de Árvore (Treemap): Estrutura Hierárquica das IES (AJUSTADO para usar Total de Livros Eletrônicos como valor, referenciado em image_8ed7bb.png)
-        if all(col in df_filtrado.columns for col in ["Organização Acadêmica", "Categoria Administrativa", "Tipo de Rede", "Total de Livros Eletrônicos"]) and not df_filtrado.empty:
-            st.markdown("##### Estrutura das IES: Organização Acadêmica e Total de Livros Eletrônicos (Treemap)")
-            # Agrupa para obter a soma de livros eletrônicos para cada combinação hierárquica
-            df_treemap_livros = df_filtrado.groupby(['Organização Acadêmica', 'Categoria Administrativa', 'Tipo de Rede'])['Total de Livros Eletrônicos'].sum().reset_index(name='Soma de Livros Eletrônicos')
+
+
+        # 5. Modelo de Gráfico de Árvore (Treemap): Personalizado com Livros Eletrônicos para Tamanho e Cor
+        if all(col in df_filtrado.columns for col in ["Organização Acadêmica", "Total de Livros Eletrônicos"]) and not df_filtrado.empty:
+            st.markdown("##### Estrutura das IES por Organização Acadêmica (Tamanho e Cor: Livros Eletrônicos)")
+            
+            # Agrupa os dados apenas por Organização Acadêmica e soma as colunas de interesse
+            df_treemap_data = df_filtrado.groupby('Organização Acadêmica').agg(
+                Soma_Livros_Eletronicos=('Total de Livros Eletrônicos', 'sum')
+            ).reset_index()
             
             fig_treemap_livros = px.treemap(
-                df_treemap_livros, 
-                path=['Organização Acadêmica', 'Categoria Administrativa', 'Tipo de Rede'], # Define a hierarquia
-                values='Soma de Livros Eletrônicos', # Usando a nova coluna para tamanho
-                title='Estrutura Hierárquica das IES por Organização, Categoria e Tipo de Rede (Tamanho por Livros Eletrônicos)',
-                color_discrete_sequence=px.colors.qualitative.Dark24 
+                df_treemap_data, 
+                path=['Organização Acadêmica'], # Caminho da hierarquia simplificado
+                values='Soma_Livros_Eletronicos', # Tamanho do bloco pela soma de livros eletrônicos
+                color='Soma_Livros_Eletronicos', # Cor do bloco pela soma de livros eletrônicos
+                title='Estrutura das IES por Organização Acadêmica (Tamanho e Cor: Livros Eletrônicos)',
+                color_continuous_scale=px.colors.sequential.Blues, # Usar uma escala de azuis contínua para 'Livros Eletrônicos'
+                hover_data=['Soma_Livros_Eletronicos'] # Mostrar esta informação no tooltip
             )
-            fig_treemap_livros.update_layout(margin = dict(t=50, l=25, r=25, b=25)) 
-            st.plotly_chart(fig_treemap_livros, use_container_width=True)
+            # Ajustes para retirar a borda e aumentar visualização horizontal
+            fig_treemap_livros.update_layout(
+                margin = dict(t=0, l=0, r=0, b=0), # Margens laterais para 0 para maximizar largura
+                uniformtext_minsize=10, 
+                uniformtext_mode='hide',
+            )
+            # Remover bordas das células do treemap
+            fig_treemap_livros.update_traces(marker_line_width=0)
+            
+            st.plotly_chart(fig_treemap_livros, use_container_width=True) 
         else:
-            st.warning("Não foi possível gerar 'Gráfico de Árvore por Livros Eletrônicos': Colunas essenciais ausentes ou dados filtrados vazios.")
+            st.warning("Não foi possível gerar 'Gráfico de Árvore': Colunas essenciais ausentes ou dados filtrados vazios.")
 
 
-        # 6. Modelo de Gráfico de Barras: Total de Docentes por Nível de Formação (Mantido)
+        # 6. Modelo de Gráfico de Barras: Total de Docentes por Nível de Formação
         docentes_cols_for_plot = [
             'Docentes Sem Graduação', 'Docentes com Graduação', 'Docentes com Especialização',
             'Docentes com Mestrado', 'Docentes com Doutorado'
@@ -387,6 +488,9 @@ if not df.empty:
             
             docentes_resumo_filtrado = df_filtrado[docentes_cols_for_plot].sum().reset_index()
             docentes_resumo_filtrado.columns = ['Nível de Formação', 'Total de Docentes']
+
+            # Ordena os dados em ordem decrescente
+            docentes_resumo_filtrado = docentes_resumo_filtrado.sort_values(by='Total de Docentes', ascending=False)
 
             fig_docentes = px.bar(
                 docentes_resumo_filtrado, 
@@ -444,24 +548,22 @@ if not df.empty:
 
             1.  **Filtros (Input) afetam os Gráficos e Tabelas (Output):**
                 * Quando você seleciona um **"Ano do Censo"**, **"Organização Acadêmica"**, **"Tipo de Rede"**, **"Município"**
-                    ou **"Instituição de Ensino"** na barra lateral, o Streamlit reexecuta todo o script a partir do topo.
+                    ou **"Instituição de Ensino"** nos filtros, o Streamlit reexecuta todo o script.
                 * O DataFrame `df_filtrado` é reconstruído com base nas suas seleções.
-                * Todos os gráficos (`fig_ies_municipio`, `fig_cat_admin`, `fig_docentes`, `fig_treemap`, `fig_tec_mantenedora`)
+                * Todos os gráficos (`fig_ies_municipio`, `fig_cat_admin`, `fig_docentes_org_sexo`, `fig_treemap_livros`, `fig_docentes`, `fig_tec_mantenedora`)
                     e as tabelas (`st.dataframe`) que utilizam `df_filtrado` são redesenhados automaticamente para refletir
                     apenas os dados correspondentes aos seus filtros. Este é o tipo mais comum de interatividade
                     bidirecional em dashboards.
 
             2.  **Visualizações (Output) informam Novas Interações (Input):**
-                * Embora os gráficos do Plotly Express no Streamlit não tenham "cliques" nativos para filtrar outros elementos
-                    diretamente (sem bibliotecas adicionais como `streamlit-plotly-events` que exigiria mais código), a informação
-                    visualizada no gráfico (e.g., um município com muitas IES, uma categoria administrativa predominante)
-                    pode guiar o usuário a ajustar os filtros na barra lateral para uma análise mais profunda.
-                    Por exemplo, se um Treemap mostrar um grande bloco para "Universidade Federal", o usuário
-                    pode ir ao filtro "Organização Acadêmica" e selecionar "Universidade" para ver detalhes apenas daquele tipo,
-                    e no filtro "Categoria Administrativa", selecionar "Pública Federal".
+                * Os gráficos do Plotly Express no Streamlit possuem interatividade integrada como **zoom**, **pan** e **tooltips** detalhados
+                    ao passar o mouse sobre os elementos (por exemplo, barras ou fatias do treemap).
+                    Embora não haja "cliques" nativos para filtrar outros elementos diretamente em todos os gráficos (sem bibliotecas adicionais),
+                    a informação visualizada no gráfico (e.g., um município com muitas IES, uma categoria administrativa predominante)
+                    pode guiar o usuário a ajustar os filtros para uma análise mais profunda.
 
             **Como é implementado no código:**
-            * Os widgets (`st.selectbox`, etc.) na barra lateral armazenam a escolha do usuário na memória.
+            * Os widgets (`st.selectbox`, etc.) armazenam a escolha do usuário na memória.
             * Cada interação do usuário com um widget força o Streamlit a reexecutar o script de cima para baixo.
             * O DataFrame `df_filtrado` é criado dinamicamente, aplicando todos os filtros selecionados.
             * Os gráficos e tabelas são então gerados usando este `df_filtrado`, garantindo que o painel esteja sempre
