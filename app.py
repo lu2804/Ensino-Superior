@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os # Módulo para operações de sistema, útil para verificar arquivos
+import os 
 
 # --- Configurações Iniciais do Streamlit ---
 # Define o layout da página para ser amplo e o título que aparece na aba do navegador.
@@ -19,17 +19,12 @@ st.markdown("Este painel interativo permite explorar dados sobre instituições 
 # tornando-o muito mais rápido.
 @st.cache_data
 def carregar_dados():
-    """
-    Carrega os dados do arquivo CSV 'table_EDUCACAO_SUPERIOR_RIDE_DF.csv'.
-    Realiza o pré-processamento das colunas, renomeando-as e mapeando valores numéricos
-    para descrições textuais mais legíveis.
-    """
+   
     try:
         # Define o nome do arquivo CSV
         csv_file_name = "table_EDUCACAO_SUPERIOR_RIDE_DF.csv"
         
         # Constrói o caminho completo para o CSV usando o diretório do script atual
-        # Isso é mais robusto contra onde o comando 'streamlit run' é executado
         script_dir = os.path.dirname(__file__)
         csv_file_path_absolute = os.path.join(script_dir, csv_file_name)
         
@@ -63,7 +58,7 @@ def carregar_dados():
         if missing_cols:
             st.error(f"Erro: As seguintes colunas essenciais não foram encontradas no arquivo CSV: {', '.join(missing_cols)}."
                      f" Verifique se o arquivo está correto e se os nomes das colunas correspondem (sensível a maiúsculas/minúsculas).")
-            return pd.DataFrame() # Retorna um DataFrame vazio se colunas essenciais estiverem faltando
+            return pd.DataFrame()
 
         # Renomeia colunas para nomes mais amigáveis e consistentes para uso no aplicativo
         df.rename(columns={
