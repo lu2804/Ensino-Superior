@@ -1,0 +1,7 @@
+
+#pip install streamlit pandas plotly
+#cd Ensino_Superior
+#.venv\Scripts\Activate.ps1
+
+#Após rodar o código:
+#streamlit run app.py
