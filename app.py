@@ -1,4 +1,3 @@
-#pip install streamlit plotly pandas
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -9,7 +8,7 @@ import os
 st.set_page_config(layout="wide", page_title="Educação Superior RIDE/DF")
 
 # Título principal do aplicativo
-st.title("🎓 Análise da Educação Superior na RIDE/DF")
+st.title("🎓 Análise da Educação Superior na RIDE/DF - 2023")
 # Descrição introdutória
 st.markdown("Este painel interativo permite explorar dados sobre instituições e docentes de ensino superior na Região Integrada de Desenvolvimento do Distrito Federal e Entorno (RIDE/DF).")
 
@@ -29,7 +28,7 @@ def carregar_dados():
         csv_file_path_absolute = os.path.join(script_dir, csv_file_name)
         
         # DEBUG: Imprime o caminho completo que o script está tentando acessar (na UI do Streamlit)
-        st.info(f"Tentando carregar o CSV de: `{csv_file_path_absolute}`")
+        #st.info(f"Tentando carregar o CSV de: `{csv_file_path_absolute}`")
         
         # Verifica se o arquivo existe antes de tentar carregar
         if not os.path.exists(csv_file_path_absolute):
@@ -51,7 +50,11 @@ def carregar_dados():
             'QT_DOC_EX_MEST', 'QT_DOC_EX_DOUT',
             'QT_LIVRO_ELETRONICO', 
             'QT_DOC_EX_FEMI', 
-            'QT_DOC_EX_MASC' 
+            'QT_DOC_EX_MASC' , 'QT_DOC_EX_0_29','QT_DOC_EX_30_34','QT_DOC_EX_35_39','QT_DOC_EX_40_44',
+            'QT_DOC_EX_45_49',
+            'QT_DOC_EX_50_54',
+            'QT_DOC_EX_55_59',
+            'QT_DOC_EX_60_MAIS',
         ]
         
         missing_cols = [col for col in required_original_cols if col not in df.columns]
@@ -81,7 +84,8 @@ def carregar_dados():
             'QT_DOC_EX_DOUT': 'Docentes com Doutorado',
             'QT_LIVRO_ELETRONICO': 'Total de Livros Eletrônicos', 
             'QT_DOC_EX_FEMI': 'Docentes Feminino', 
-            'QT_DOC_EX_MASC': 'Docentes Masculino' 
+            'QT_DOC_EX_MASC': 'Docentes Masculino' ,
+        
         }, inplace=True)
 
         # Preencher valores NaN (Not a Number) em colunas numéricas de contagem com 0.
@@ -115,8 +119,8 @@ def carregar_dados():
         if 'Categoria Administrativa' in df.columns:
             categoria_map = {
                 1: 'Pública Federal', 2: 'Pública Estadual', 3: 'Pública Municipal',
-                4: 'Privada Comunitária', 5: 'Privada Confessional', 6: 'Privada Filantrópica',
-                7: 'Privada Sem Fins Lucrativos', 8: 'Privada Com Fins Lucrativos'
+                4: 'Privada com fins lucrativos', 5: 'Privada sem fins lucrativos', 6: 'Privada - Particular em sentido estrito',
+                7: 'Especial', 8: 'Privada comunitária', 9: 'Privada confessional'
             }
             df['Categoria Administrativa'] = df['Categoria Administrativa'].map(categoria_map).fillna('Não Definido')
 
@@ -185,7 +189,8 @@ if not df.empty:
         total_ies = df_filtrado['Nome da IES'].nunique() if 'Nome da IES' in df_filtrado.columns else 0
         total_docentes_ex = df_filtrado['Total de Docentes'].sum() if 'Total de Docentes' in df_filtrado.columns else 0
         total_municipios_c_ies = df_filtrado['Município'].nunique() if 'Município' in df_filtrado.columns else 0
-        total_livros_eletronicos = df_filtrado['Total de Livros Eletrônicos'].sum() if 'Total de Livros Eletrônicos' in df_filtrado.columns else 0
+        total_tecnicos = df_filtrado['Total de Técnicos'].sum() if 'Total de Técnicos' in df_filtrado.columns else 0
+
         
         col1, col2, col3, col4 = st.columns(4) 
         with col1:
@@ -195,7 +200,7 @@ if not df.empty:
         with col3:
             st.metric(label="Municípios c/ IES", value=total_municipios_c_ies)
         with col4: # Nova métrica
-            st.metric(label="Total de Livros Eletrônicos", value=f"{total_livros_eletronicos:,.0f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.metric(label="Total de Técnico-administrativos", value=f"{total_tecnicos:,.0f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
 
         # --- PRÉVIA DOS DADOS ---
@@ -217,13 +222,35 @@ if not df.empty:
                     x="Município", 
                     y="Total de IES", 
                     text="Total de IES", 
-                    title="Número Total de Instituições de Ensino Superior por Município",
                     labels={"Total de IES": "Número de Instituições", "Município": "Município"},
                     color_discrete_sequence=['#2C5E8A'] # Cor alterada para '#2C5E8A'
                 )
                 fig_ies_municipio.update_traces(textposition='outside') 
                 fig_ies_municipio.update_layout(xaxis_title="Município", yaxis_title="Total de IES", hovermode="x unified")
                 st.plotly_chart(fig_ies_municipio, use_container_width=True)
+
+
+        if "Organização Acadêmica" in df_filtrado.columns:
+                st.markdown("##### Quantidade de Organizações Acadêmicas")
+                org_acad_freq = df_filtrado["Organização Acadêmica"].value_counts().reset_index()
+                org_acad_freq.columns = ["Organização Acadêmica", "Frequência"]
+                org_acad_freq = org_acad_freq.sort_values("Frequência", ascending=True)
+
+                fig_org_acad = px.bar(
+                    org_acad_freq,
+                    x="Frequência",
+                    y="Organização Acadêmica",
+                    orientation="h",
+                    text="Frequência",
+                    color_discrete_sequence=["#2C5E8A"]
+                )
+                fig_org_acad.update_traces(textposition="outside")
+                fig_org_acad.update_layout(
+                    xaxis_title="Frequência",
+                    yaxis_title="Organização Acadêmica",
+                    hovermode="y unified"
+                )
+                st.plotly_chart(fig_org_acad, use_container_width=True)
         else:
             st.warning("Não foi possível gerar 'Total de IES por Município': Colunas necessárias ausentes ou dados filtrados vazios.")
 
@@ -239,10 +266,9 @@ if not df.empty:
                 y="Mantenedora",     
                 orientation='h',     
                 text="Total de Técnicos", 
-                title="Quantidade Total de Técnicos por Mantenedora",
                 labels={"Total de Técnicos": "Quantidade Total de Técnicos", "Mantenedora": "Nome da Mantenedora"},
                   color_discrete_map={
-                    'Total de Técnicos': '#2C5E8A', # Tom de azul mais escuro
+                    'Total de Técnicos':'#2C5E8A', # Tom de azul mais escuro
                                 },
             )
             fig_tec_mantenedora.update_traces(textposition='outside')
@@ -273,7 +299,7 @@ if not df.empty:
             total_docentes_para_grafico = docentes_long['Quantidade de Docentes'].sum()
             
             # --- Layout para Título e Métrica ---
-            st.markdown("#### Quantidade de Docentes do sexo feminino, Quantidade de docentes do sexo masculino por Organização Acadêmica")
+            st.markdown("#### Quantidade de docentes do sexo feminino e masculino por organização acadêmica")
             
             # Usando colunas para a métrica total e o título da sub-seção do gráfico
             col_total_docentes, col_sub_titulo_grafico = st.columns([0.25, 0.75])
@@ -282,27 +308,25 @@ if not df.empty:
                 # círculo
 
                 st.markdown(f"""
-                <div style="
-                    border: 4px solid #3366CC; 
-                    border-radius: 50%; 
-                    width: 150px; 
-                    height: 150px; 
-                    display: flex; 
-                    flex-direction: column; 
-                    justify-content: center; 
-                    align-items: center; 
-                    margin: 20px auto;
-                    color: {'white' if st.config.get_option('theme.base') == 'dark' else 'black'};
-                    background-color: {'#0E1117' if st.config.get_option('theme.base') == 'dark' else 'white'};
-                    text-align: center;
-                ">
-                    <span style="font-size: 14px;">Quantidade total de docentes</span>
-                    <span style="font-size: 24px; font-weight: bold;">{f'{total_docentes_para_grafico / 1000:,.1f}'.replace(",", "X").replace(".", ",").replace("X", ".")} mil</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col_sub_titulo_grafico:
-                st.markdown("##### Quantidade de docentes do sexo feminino / Quantidade de docentes do sexo masculino")
+               <div style="
+            border: 4px solid #3366CC; 
+            border-radius: 50%; 
+            width: 150px; 
+            height: 150px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            margin: 20px auto;
+            color: white;
+            background-color: black;
+            text-align: center;
+        ">
+            <span style="font-size: 14px;">Quantidade total de docentes</span>
+            <span style="font-size: 24px; font-weight: bold;">{f'{total_docentes_para_grafico / 1000:.1f}'.replace(",", "X").replace(".", ",").replace("X", ".")} mil</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
 
 
             # Ordena a coluna 'Organização Acadêmica' para uma apresentação consistente no eixo X
@@ -337,22 +361,29 @@ if not df.empty:
                 category_orders=category_orders 
             )
             # Formatação dos números nas barras para "mil" e posicionamento externo
-            fig_docentes_org_sexo.update_traces(texttemplate='%{y:,.1s}', textposition='outside')
+            fig_docentes_org_sexo.update_traces(texttemplate='%{y:.1f}', textposition='outside')
             
             fig_docentes_org_sexo.update_layout(
-                xaxis_title="Organização Acadêmica", 
-                yaxis_title="", # Eixo Y sem título para replicar a imagem
-                hovermode="x unified",
-                # Posicionamento da legenda abaixo do gráfico
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=-0.2, # Ajusta para ficar abaixo do gráfico
-                    xanchor="center",
-                    x=0.10, # Centraliza horizontalmente
-                    title_text="" # Remove o título da legenda
-                )
-            )
+    xaxis_title="Organização Acadêmica", 
+    yaxis_title="",  # Sem título no eixo Y
+    hovermode="x unified",
+
+    # Legenda posicionada à direita do gráfico
+    legend=dict(
+        orientation="v",        # Vertical (uma abaixo da outra)
+        y=1,                    # Alinhado ao topo
+        yanchor="top",
+        x=1.02,                 # Fora da área do gráfico, à direita
+        xanchor="left",
+        title_text="",
+        font=dict(             # Aqui você altera o tamanho e a cor da fonte
+        size=18,           # Tamanho da fonte (pode aumentar para 16, 18...)
+        color="white"      # Se estiver usando fundo escuro
+        )         # Remove o título da legenda
+    ),
+
+    margin=dict(r=160)  # Garante espaço à direita para a legenda
+)
             st.plotly_chart(fig_docentes_org_sexo, use_container_width=True)
         else:
             st.warning("Não foi possível gerar 'Quantidade de Docentes por Sexo e Organização Acadêmica': Colunas necessárias ausentes ou dados filtrados vazios.")
@@ -371,51 +402,31 @@ if not df.empty:
                 cat_admin_counts, 
                 values='Número de IES', 
                 names='Categoria Administrativa', 
-                title='Distribuição de Instituições de Ensino Superior por Categoria Administrativa',
                 hole=0, 
                 height=600, # Aumenta a altura do gráfico
                 # Cores em tons de azul conforme solicitado (e uma cor extra para 'Outras Categorias')
                 color_discrete_sequence=['#2470AD', '#33A3FF', '#7DC3FC', '#C7E3F9', '#1A4B7D'] 
             )
             fig_cat_admin.update_traces(textposition='inside', textinfo='percent') # Mostra percentual e label dentro das fatias
+            # Aumenta o tamanho da legenda
+            fig_cat_admin.update_layout(
+              legend=dict(
+               font=dict(size=18)
+              )
+            )
             st.plotly_chart(fig_cat_admin, use_container_width=True)
         else:
-            st.warning("Não foi possível gerar 'Distribuição de Instituições por Categoria Administrativa': Coluna 'Categoria Administrativa' ausente ou dados filtrados vazios.")
-
-         # 5. Gráfico de Árvore (Treemap): Estrutura das IES por Organização Acadêmica (Tamanho e Cor: Livros Eletrônicos)
-        if all(col in df_filtrado.columns for col in ["Organização Acadêmica", "Total de Livros Eletrônicos"]) and not df_filtrado.empty:
-            st.markdown("##### Estrutura das IES por Organização Acadêmica (Tamanho e Cor: Livros Eletrônicos)")
-            
-            df_treemap_data = df_filtrado.groupby('Organização Acadêmica').agg(
-                Soma_Livros_Eletronicos=('Total de Livros Eletrônicos', 'sum')
-            ).reset_index()
-            
-            fig_treemap_livros = px.treemap(
-                df_treemap_data, 
-                path=['Organização Acadêmica'], 
-                values='Soma_Livros_Eletronicos', 
-                color='Soma_Livros_Eletronicos', 
-                title=None, # Título do gráfico de árvore removido
-                color_continuous_scale=[(0, "#035AC4"), (1, "#69ADE4")], # Escala de cor azul do mais escuro ao mais claro
-                hover_data=['Soma_Livros_Eletronicos'] 
-            )
-            fig_treemap_livros.update_layout(
-                margin = dict(t=0, l=0, r=0, b=0), 
-                uniformtext_minsize=10, 
-                uniformtext_mode='hide',
-                height=400,
-            )
-            fig_treemap_livros.update_traces(marker_line_width=0) # Removido o 0.1 para borda quase invisível
-            st.plotly_chart(fig_treemap_livros, use_container_width=True) 
-        else:
-            st.warning("Não foi possível gerar 'Gráfico de Árvore': Colunas essenciais ausentes ou dados filtrados vazios.")
+          st.warning("Não foi possível gerar 'Distribuição de Instituições por Categoria Administrativa': Coluna 'Categoria Administrativa' ausente ou dados filtrados vazios.")
 
 
         # 6. Modelo de Gráfico de Barras: Total de Docentes por Nível de Formação
         docentes_cols_for_plot = [
-                'Docentes Sem Graduação', 'Docentes com Graduação', 'Docentes com Especialização',
-                'Docentes com Mestrado', 'Docentes com Doutorado'
-            ]
+            'Docentes Sem Graduação', 
+            'Docentes com Graduação', 
+            'Docentes com Especialização',
+            'Docentes com Mestrado', 
+            'Docentes com Doutorado'
+        ]
 
         if all(col in df_filtrado.columns for col in docentes_cols_for_plot) and not df_filtrado.empty:
                 st.markdown("##### Total de Docentes por Nível de Formação")
@@ -423,21 +434,111 @@ if not df.empty:
                 docentes_resumo_filtrado = df_filtrado[docentes_cols_for_plot].sum().reset_index()
                 docentes_resumo_filtrado.columns = ['Nível de Formação', 'Total de Docentes']
                 docentes_resumo_filtrado = docentes_resumo_filtrado.sort_values(by='Total de Docentes', ascending=False)
+                
+                docentes_por_tipo = df_filtrado.groupby('Tipo de Rede')[docentes_cols_for_plot].sum().reset_index()
 
-                fig_docentes = px.bar(
-                    docentes_resumo_filtrado, 
-                    x='Nível de Formação', 
-                    y='Total de Docentes', 
-                    title='Total de Docentes por Nível de Formação (Dados Filtrados)',
-                    labels={'Nível de Formação': 'Nível de Formação', 'Total de Docentes': 'Quantidade Total de Docentes'},
-                    text='Total de Docentes', 
-                    color_discrete_sequence=['#2C5E8A'] # Cor alterada para '#2C5E8A'
+                docentes_melted = docentes_por_tipo.melt(
+                id_vars='Tipo de Rede', 
+                var_name='Nível de Formação', 
+                value_name='Quantidade'
+               )
+                ordem_formacao = [
+                'Docentes com Doutorado',
+                'Docentes com Graduação',
+                'Docentes Sem Graduação',
+                'Docentes com Especialização',
+                'Docentes com Mestrado'
+            ]
+                
+                docentes_melted['Nível de Formação'] = pd.Categorical(
+                    docentes_melted['Nível de Formação'], 
+                    categories=ordem_formacao, 
+                    ordered=True
                 )
-                fig_docentes.update_traces(textposition='outside')
-                fig_docentes.update_layout(xaxis_title="Nível de Formação", yaxis_title="Quantidade Total de Docentes", hovermode="x unified")
-                st.plotly_chart(fig_docentes, use_container_width=True)
+
+
+                # Cores personalizadas para os níveis de formação
+                cores = {
+                     'Docentes com Doutorado': '#1f5aa5',        # azul escuro
+                    'Docentes com Graduação': '#2e7cd1',
+                    'Docentes Sem Graduação': '#36a2e0',
+                    'Docentes com Especialização': '#6ec3ee',
+                    'Docentes com Mestrado': '#c6e4f8'          # azul bem claro
+                }
+
+                fig = px.bar(
+                 docentes_melted,
+                 y='Tipo de Rede',
+                x='Quantidade',
+                color='Nível de Formação',
+                orientation='h',
+                color_discrete_map=cores,
+                text='Quantidade',
+                category_orders={'Nível de Formação': ordem_formacao}  # garante a ordem visual
+            )
+
+                fig.update_layout(
+                    barmode='stack',
+                    xaxis_title=None,
+                    yaxis_title=None,
+                    legend_title_text=None,
+                    font_color='black',
+                    legend=dict(
+                     font=dict(size=18)  # Tamanho da fonte da legenda
+                    )
+            )
+                fig.update_traces(textposition='inside', texttemplate='%{text:,}')
+             # Exibição no Streamlit
+                st.plotly_chart(fig, use_container_width=True)
+
+    
         else:
                 st.warning("Não foi possível gerar 'Total de Docentes por Nível de Formação': Colunas de docentes ausentes ou dados filtrados vazios.")
+
+
+         # 5. Gráfico de Árvore (Treemap): Estrutura das IES por Organização Acadêmica (Tamanho e Cor: Livros Eletrônicos)
+        if all(col in df_filtrado.columns for col in ["Organização Acadêmica", "Total de Livros Eletrônicos"]) and not df_filtrado.empty:
+            st.markdown("##### Quantidade de livros eletrônicos por tipo de organização acadêmica")
+            
+            df_treemap_data = df_filtrado.groupby('Organização Acadêmica').agg(
+                Soma_Livros_Eletronicos=('Total de Livros Eletrônicos', 'sum')
+            ).reset_index()
+            
+            menor_valor = df_treemap_data['Soma_Livros_Eletronicos'].min()
+            menor_index = df_treemap_data['Soma_Livros_Eletronicos'].idxmin()
+              
+
+            df_treemap_data.loc[menor_index, 'Organização Acadêmica'] = "IF"
+             # Criar coluna auxiliar de texto (vazia para a menor categoria)
+            df_treemap_data['custom_text'] = df_treemap_data.apply(
+                lambda row: "" if row['Organização Acadêmica'] == "IF" else f"{row['Organização Acadêmica']}<br>{row['Soma_Livros_Eletronicos']:,}",
+                axis=1
+            )
+            fig_treemap_livros = px.treemap(
+                 df_treemap_data, 
+                path=['Organização Acadêmica'], 
+                values='Soma_Livros_Eletronicos', 
+                color='Soma_Livros_Eletronicos', 
+                color_continuous_scale=[(0, "#69ADE4"), (1,"#035AC4")],
+                hover_data={'Soma_Livros_Eletronicos': ':.0f'}  # mostra número inteiro no hover
+            )
+            fig_treemap_livros.update_layout(
+                margin=dict(t=0, l=0, r=0, b=0),
+                uniformtext_minsize=15,  
+                uniformtext_mode='show',  # ← força mostrar texto dentro dos blocos
+                coloraxis_colorbar=dict(
+                title='Quantidade de livros eletrônicos'  # ← título da legenda
+                 ),
+                height=400
+            )       
+            fig_treemap_livros.update_traces(
+             texttemplate='%{label}<br>%{value:,}',  # ← mostra nome + número dentro do bloco
+             marker_line_width=0
+            )
+            st.plotly_chart(fig_treemap_livros, use_container_width=True) 
+        else:
+            st.warning("Não foi possível gerar 'Gráfico de Árvore': Colunas essenciais ausentes ou dados filtrados vazios.")
+
 
         # 7. Tabela Detalhada das IES Filtradas (Mantida)
         if not df_filtrado.empty:
@@ -450,13 +551,13 @@ if not df.empty:
 
             if all(col in df_filtrado.columns for col in group_cols + measures):
                 ies_summary_table = df_filtrado.groupby(group_cols).agg(
-                    Total_Docentes_IES=('Total de Docentes', 'sum'),
-                    Total_Tecnicos_IES=('Total de Técnicos', 'sum')
+                    Total_de_Docentes=('Total de Docentes', 'sum'),
+                    Total_de_Tecnicos=('Total de Técnicos', 'sum')
                 ).reset_index()
 
                 final_cols = ['Ano do Censo', 'Município', 'Nome da IES', 'Sigla da IES', 
                               'Organização Acadêmica', 'Tipo de Rede', 'Categoria Administrativa',
-                              'Total_Docentes_IES', 'Total_Tecnicos_IES']
+                              'Total_de_Docentes', 'Total_de_Tecnicos']
                 
                 st.dataframe(ies_summary_table[final_cols])
             else:
